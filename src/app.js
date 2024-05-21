@@ -9,19 +9,16 @@ const app = express();
 app.use(morgan("dev"));
 app.use(helmet());
 app.use(compression());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 //init db
-require('./dbs/init.mongodb.js');
-const {checkOverload} = require('./helpers/check.connect');
-checkOverload()
+require("./dbs/init.mongodb.js");
+// const {checkOverload} = require('./helpers/check.connect');
+// checkOverload()
 
 //init routerX
-app.get('/',(req,res,next) => {
-    const strCompress = "Hehe boi!"
-    return res.status(200).json({
-        message: 'welcome'
-    })
-})
+app.use("/", require("./routes"));
 
 //handle error
 module.exports = app;
