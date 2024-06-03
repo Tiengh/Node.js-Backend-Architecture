@@ -4,9 +4,10 @@
 ### signup
 POST {{url_dev}}/shop/signup
 Content-Type: application/json
+x-api-key: af0ded2cf822bd3f835a9882e69eae120b04b0a520a8feb23372269b901500a3d7e881651af0ee12ea39ec8b69ec4a36f564677cae8519f72c8b02aa24e48fc7
 
 {
-    "name":"Shopee con card",
-    "email":"token8@gmail.com",
+    "name":"Test name 2",
+    "email":"testemail6@gmail.com",
     "password":"abc123"
 }
