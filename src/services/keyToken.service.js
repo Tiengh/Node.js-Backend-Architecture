@@ -4,7 +4,7 @@ const { Types } = require("mongoose");
 class KeyTokenService {
   static createKeyToken = async ({ userId, publicKey, privateKey, refreshToken }) => {
     try {
-      const filter = { user: userId };
+      const filter = { user: new Types.ObjectId(userId) }; // Convert userId to ObjectId
       const update = {
         publicKey,
         privateKey,
@@ -15,31 +15,55 @@ class KeyTokenService {
       const tokens = await keyTokenModel.findOneAndUpdate(filter, update, options);
       return tokens ? tokens.publicKey : null;
     } catch (error) {
+      console.error(`Error in createKeyToken:`, error);
       return error;
     }
   };
 
   static findByUserId = async (userId) => {
-    return await keyTokenModel.findOne({ user: new Types.ObjectId(userId) }).lean();
+    try {
+      return await keyTokenModel.findOne({ user: new Types.ObjectId(userId) }).lean();
+    } catch (error) {
+      console.error(`Error in findByUserId:`, error);
+      throw error;
+    }
   };
 
   static findByRefreshTokenUsed = async (refreshToken) => {
-    return await keyTokenModel.findOne({ refreshTokenUsed: String(refreshToken) }).lean();
+    try {
+      return await keyTokenModel.findOne({ refreshTokenUsed: String(refreshToken) }).lean();
+    } catch (error) {
+      console.error(`Error in findByRefreshTokenUsed:`, error);
+      throw error;
+    }
   };
 
   static findByRefreshToken = async (refreshToken) => {
-    return await keyTokenModel.findOne({ refreshToken: String(refreshToken) });
+    try {
+      return await keyTokenModel.findOne({ refreshToken: String(refreshToken) });
+    } catch (error) {
+      console.error(`Error in findByRefreshToken:`, error);
+      throw error;
+    }
   };
 
   static removeKeyById = async (id) => {
-    return await keyTokenModel.findByIdAndDelete(id);
+    try {
+      return await keyTokenModel.findByIdAndDelete(id);
+    } catch (error) {
+      console.error(`Error in removeKeyById:`, error);
+      throw error;
+    }
   };
 
   static removeKeyByUserId = async (userId) => {
-    return await keyTokenModel.findByIdAndDelete({ user: userId });
+    try {
+      return await keyTokenModel.findOneAndDelete({ user: new Types.ObjectId(userId) }); // Corrected method
+    } catch (error) {
+      console.error(`Error in removeKeyByUserId:`, error);
+      throw error;
+    }
   };
 }
 
 module.exports = KeyTokenService;
-
-

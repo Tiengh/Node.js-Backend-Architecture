@@ -6,11 +6,21 @@ const { OK, CREATED, SuccessResponse } = require("../core/success.response.js");
 
 class AccessController {
   handlerRefreshToken = async (req, res, next) => {
+    // new SuccessResponse({
+    //   message: "Get token success!",
+    //   metadata: await AccessService.handlerRefreshToken({
+    //     refreshToken: req.body.refreshToken,
+    // }),
+    // }).send(res);
+
+    /* v2 fixed, don't need accessToken */
     new SuccessResponse({
       message: "Get token success!",
-      metadata: await AccessService.handlerRefreshToken({
-        refreshToken: req.body.refreshToken,
-    }),
+      metadata: await AccessService.handlerRefreshTokenV2({
+        keyStore: req.keyStore,
+        refreshToken: req.refreshToken,
+        user: req.user,
+      }),
     }).send(res);
   };
 
