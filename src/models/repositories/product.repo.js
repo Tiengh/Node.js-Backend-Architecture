@@ -8,12 +8,14 @@ const {
   furniture,
 } = require("../../models/product.model");
 const { Types } = require("mongoose");
+const { getSelectData, unGetSelectData } = require("../../utils/index");
 
 const searchProductByUser = async ({ keySearch }) => {
   const regexSearch = new RegExp(keySearch);
   const results = await product
     .find(
       {
+        isDraft: false,
         $text: { $search: regexSearch },
       },
       { score: { $meta: "textScore" } }
@@ -25,25 +27,28 @@ const searchProductByUser = async ({ keySearch }) => {
 };
 
 const findAllDraftForShop = async ({ query, limit, skip }) => {
-  return await product
-    .find(query)
-    .populate("product_shop", "name email -_id")
-    .sort({ update: -1 })
-    .skip(skip)
-    .limit(limit)
-    .lean()
-    .exec();
+  return await queyProduct({ query, limit, skip });
 };
 
 const findAllPublishForShop = async ({ query, limit, skip }) => {
-  return await product
-    .find(query)
-    .populate("product_shop", "name email -_id")
-    .sort({ update: -1 })
+  return await queyProduct({ query, limit, skip });
+};
+
+const findAllProducts = async ({ limit, sort, page, filter, select }) => {
+  const skip = (page - 1) * limit;
+  const sortBy = sort === "ctime" ? { _id: -1 } : { _id: 1 };
+  const products = await product
+    .find(filter)
+    .sort(sortBy)
     .skip(skip)
     .limit(limit)
-    .lean()
-    .exec();
+    .select(getSelectData(select))
+    .lean();
+  return products;
+};
+
+const findProduct = async ({ product_id, unSelect }) => {
+  return await product.findById(product_id).select(unGetSelectData(unSelect));
 };
 
 const publishProductByShop = async ({ product_shop, product_id }) => {
@@ -71,9 +76,23 @@ const unPublishProductByShop = async ({ product_shop, product_id }) => {
 
   return modifiedCount;
 };
+
+const queyProduct = async ({ query, limit, skip }) => {
+  return await product
+    .find(query)
+    .populate("product_shop", "name email -_id")
+    .sort({ update: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean()
+    .exec();
+};
+
 module.exports = {
   findAllDraftForShop,
   findAllPublishForShop,
+  findAllProducts,
+  findProduct,
   publishProductByShop,
   unPublishProductByShop,
   searchProductByUser,
