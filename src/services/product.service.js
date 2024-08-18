@@ -16,7 +16,13 @@ const {
   searchProductByUser,
   findAllProducts,
   findProduct,
+  updateProductById,
 } = require("../models/repositories/product.repo");
+const {
+  removeUndefineObject,
+  removeUndefinedObject,
+  updateNestedObjectParser,
+} = require("../utils");
 
 // Define Factory class to create products
 class ProductFactory {
@@ -33,13 +39,30 @@ class ProductFactory {
     }
     return new ProductClass(payload).createProduct();
   }
-  static async updateProduct(type, payload) {
+
+  // static async updateProduct(type, productId, payload) {
+  //   const ProductClass = ProductFactory.productRegistry[type];
+  //   if (!ProductClass) {
+  //     throw new Error(`Product type ${type} is not registered.`);
+  //   }
+  //   return new ProductClass(payload).updateProduct(productId);
+  // }
+
+  static async updateProduct(type, productId, payload) {
     const ProductClass = ProductFactory.productRegistry[type];
     if (!ProductClass) {
       throw new Error(`Product type ${type} is not registered.`);
     }
-    return new ProductClass(payload).createProduct();
+    console.log("Payload:", payload); // Thêm dòng này
+    const productInstance = new ProductClass(payload);
+    const result = await productInstance.updateProduct(productId);
+    console.log("Updated product:", result); // Thêm dòng này
+    return result;
   }
+
+  // PATCH //
+
+  // END PATCH //
 
   // PUT //
   static async publishProductByShop({ product_shop, product_id }) {
@@ -77,7 +100,7 @@ class ProductFactory {
     });
   }
   static async findProduct({ product_id }) {
-    return await findProduct({ product_id, unSelect: ['__v'] });
+    return await findProduct({ product_id, unSelect: ["__v"] });
   }
   // END QUERY //
 }
@@ -108,6 +131,11 @@ class Product {
   async createProduct(product_id) {
     return await product.create({ ...this, _id: product_id });
   }
+
+  // Update product
+  async updateProduct(productId, payload) {
+    return await updateProductById({ productId, payload, model: product });
+  }
 }
 
 // Define sub-classes for different product types
@@ -124,6 +152,30 @@ class Clothing extends Product {
     if (!newProduct) throw new BadRequestError("Create new Product error!");
 
     return newProduct;
+  }
+
+  async updateProduct(productId) {
+    // Remove attributes that are null or undefined
+    const objectParams = removeUndefinedObject(this);
+
+    // Check if product_attributes exists
+    if (objectParams.product_attributes) {
+      const bodyUpdate = { ...this.product_attributes };
+
+      // Update child
+      const updateChildResult = await updateProductById({
+        productId,
+        payload: updateNestedObjectParser(bodyUpdate),
+        model: clothing,
+      });
+    }
+    // Update product
+    const updateProduct = await super.updateProduct(
+      productId,
+      updateNestedObjectParser(objectParams)
+    );
+
+    return updateProduct;
   }
 }
 
