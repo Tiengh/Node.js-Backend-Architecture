@@ -1,3 +1,16 @@
+'use strict';
+
+
+/*
+  KeyTokenService Services
+   1 - createKeyToken [User]
+   2 - findByUserId [User]
+   3 - findByRefreshTokenUsed [User]
+   4 - findByRefreshToken  [User]
+   5 - removeKeyById [User]
+   6 - removeKeyByUserId [User]
+*/
+
 const keyTokenModel = require("../models/keyToken.model");
 const { Types } = require("mongoose");
 

@@ -1,5 +1,14 @@
 "use strict";
 
+/*
+  Access Services
+   1 - handlerRefreshToken [User]
+   2 - handlerRefreshTokenV2 [User]
+   3 - logout [User]
+   4 - login [User]
+   5 - signUp   [User]
+*/
+
 const shopModel = require("../models/shop.model.js");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
@@ -205,7 +214,6 @@ class AccessService {
       if (holderShop) {
         throw new BadRequestError("Error: shop already registered");
       }
-
       //*2
       const passwordHash = await bcrypt.hash(password, 10);
       const newShop = await shopModel.create({
@@ -214,11 +222,9 @@ class AccessService {
         password: passwordHash,
         roles: [Role.SHOP],
       });
-
       //*3
       const privateKey = crypto.randomBytes(64).toString("hex");
       const publicKey = crypto.randomBytes(64).toString("hex");
-
       const tokens = await createTokenPair(
         {
           userId: newShop._id,
@@ -238,7 +244,6 @@ class AccessService {
         if (!keyStore) {
           throw new BadRequestError("Error: keyStore error", 500);
         }
-
         //*4
         return {
           code: 201,

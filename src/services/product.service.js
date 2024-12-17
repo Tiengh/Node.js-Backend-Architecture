@@ -1,5 +1,19 @@
 "use strict";
 
+/*
+  Product Services
+   1 - createProduct [Shop]
+   2 - updateProduct [Shop]
+   3 - publishProductByShop [Shop]
+   4 - unPublishProductByShop  [Shop]
+   5 - findAllDraftForShop [Shop]
+   6 - findAllPublishForShop [Shop]
+   7 - searchProducts [User]
+   8 - findProduct [Shop | Admin]
+    
+*/
+
+
 const {
   product,
   clothing,
@@ -23,6 +37,7 @@ const {
   removeUndefinedObject,
   updateNestedObjectParser,
 } = require("../utils");
+const { insertInventory } = require("../models/repositories/inventory.repo");
 
 // Define Factory class to create products
 class ProductFactory {
@@ -40,29 +55,15 @@ class ProductFactory {
     return new ProductClass(payload).createProduct();
   }
 
-  // static async updateProduct(type, productId, payload) {
-  //   const ProductClass = ProductFactory.productRegistry[type];
-  //   if (!ProductClass) {
-  //     throw new Error(`Product type ${type} is not registered.`);
-  //   }
-  //   return new ProductClass(payload).updateProduct(productId);
-  // }
-
   static async updateProduct(type, productId, payload) {
     const ProductClass = ProductFactory.productRegistry[type];
     if (!ProductClass) {
       throw new Error(`Product type ${type} is not registered.`);
     }
-    console.log("Payload:", payload); // Thêm dòng này
     const productInstance = new ProductClass(payload);
     const result = await productInstance.updateProduct(productId);
-    console.log("Updated product:", result); // Thêm dòng này
     return result;
   }
-
-  // PATCH //
-
-  // END PATCH //
 
   // PUT //
   static async publishProductByShop({ product_shop, product_id }) {
@@ -129,8 +130,17 @@ class Product {
 
   // Create new product
   async createProduct(product_id) {
-    return await product.create({ ...this, _id: product_id });
+    const newProduct = await product.create({ ...this, _id: product_id });
+    if (newProduct) {
+      await insertInventory({
+        product_id: newProduct._id,
+        shopId: this.product_shop,
+        stock: this.product_quantity,
+      });
+    }
+    return newProduct;
   }
+  
 
   // Update product
   async updateProduct(productId, payload) {
@@ -193,6 +203,30 @@ class Electronic extends Product {
 
     return newProduct;
   }
+
+  async updateProduct(productId) {
+    // Remove attributes that are null or undefined
+    const objectParams = removeUndefinedObject(this);
+
+    // Check if product_attributes exists
+    if (objectParams.product_attributes) {
+      const bodyUpdate = { ...this.product_attributes };
+
+      // Update child
+      const updateChildResult = await updateProductById({
+        productId,
+        payload: updateNestedObjectParser(bodyUpdate),
+        model: electronic,
+      });
+    }
+    // Update product
+    const updateProduct = await super.updateProduct(
+      productId,
+      updateNestedObjectParser(objectParams)
+    );
+
+    return updateProduct;
+  }
 }
 
 class Furniture extends Product {
@@ -207,6 +241,30 @@ class Furniture extends Product {
     if (!newProduct) throw new BadRequestError("Create new Product error!");
 
     return newProduct;
+  }
+
+  async updateProduct(productId) {
+    // Remove attributes that are null or undefined
+    const objectParams = removeUndefinedObject(this);
+
+    // Check if product_attributes exists
+    if (objectParams.product_attributes) {
+      const bodyUpdate = { ...this.product_attributes };
+
+      // Update child
+      const updateChildResult = await updateProductById({
+        productId,
+        payload: updateNestedObjectParser(bodyUpdate),
+        model: furniture,
+      });
+    }
+    // Update product
+    const updateProduct = await super.updateProduct(
+      productId,
+      updateNestedObjectParser(objectParams)
+    );
+
+    return updateProduct;
   }
 }
 

@@ -1,5 +1,10 @@
 "use strict";
 
+/*
+  Shop Services
+   1 - findByEmail [Admin]
+*/
+
 const shopModel = require("../models/shop.model");
 
 const findByEmail = async ({

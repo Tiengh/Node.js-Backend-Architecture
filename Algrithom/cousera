@@ -1,0 +1,96 @@
+# sudo docker run \
+#    --detach \
+#    --name instana-agent \
+#    --volume /var/run:/var/run \
+#    --volume /run:/run \
+#    --volume /dev:/dev:ro \
+#    --volume /sys:/sys:ro \
+#    --volume /var/log:/var/log:ro \
+#    --privileged \
+#    --net=host \
+#    --pid=host \
+#    --env="INSTANA_AGENT_ENDPOINT=ingress-green-saas.instana.io" \
+#    --env="INSTANA_AGENT_ENDPOINT_PORT=443" \
+#    --env="INSTANA_AGENT_KEY=TA3IwZnuSmSQ1U71Dyysrw" \
+#    --env="INSTANA_DOWNLOAD_KEY=TA3IwZnuSmSQ1U71Dyysrw" \
+#    icr.io/instana/agent
+   
+
+#    docker run \
+#    --name robot-shop \
+#    -e INSTANA_AGENT_KEY='TA3IwZnuSmSQ1U71Dyysrw' \
+#    -e INSTANA_AGENT_ENDPOINT='ingress-green-saas.instana.io' \
+#    -e INSTANA_AGENT_ENDPOINT_PORT=443 \
+#    -v /var/run/docker.sock:/var/run/docker.sock \
+#    containers.instana.io/instana/release/agent/dynamic:latest
+
+#    <script>
+#    (function(s,t,a,n){s[t]||(s[t]=a,n=s[a]=function(){n.q.push(arguments)},
+#    n.q=[],n.v=2,n.l=1*new Date)})(window,"InstanaEumObject","ineum");
+ 
+#    ineum('reportingUrl', 'https://eum-green-saas.instana.io');
+#    ineum('key', 'JF61_nlqTue89tYjWkD1ag');
+#    ineum('trackSessions');
+#  </script>
+#  <script defer crossorigin="anonymous" src="https://eum.instana.io/1.7.2/eum.min.js" 
+#   integrity="sha384-cgeSlevgebehPauohUhsnAeBrpjXzaj94mSv3L2EXjCQH0RRb9xSQ2ErGOWkthIJ"></script>
+
+#   export INSTANA_AGENT_KEY="TA3IwZnuSmSQ1U71Dyysrw"
+
+#   git clone https://github.com/Tiengh/robot-shop.git
+
+
+#   export GITHUB_ACCOUNT={Tiengh}
+
+#   git clone https://github.com/Tiengh/Back-End-Development-Pictures.git
+
+#   pytest -k 'test_health or test_count or test_data_contains_10_pictures or test_get_picture or test_get_pictures_check_content_type_equals_json or test_get_picture_by_id or test_pictures_json_is_not_empty or test_post_picture or test_post_picture_duplicate'
+
+#   pytest -k 'test_post_picture {'id': 200, 'pic_url': 'http://dummyimage.com/230x100.png/dddddd/000000', 'event_country': 'United States', 'event_state': 'California', 'event_city': 'Fremont', 'event_date': '11/2/2030'}'
+
+#   test_data_contains_10_pictures
+
+  git config --local user.name "Tiengh"
+  git config --local user.email "tienguyen132@gmail.com"
+#   git commit -am "project 1"
+#   git push --set-upstream origin main
+#   token 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
+#   git remote set-url origin https://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@github.com/Tiengh/Back-End-Development-Pictures.git
+#   git clone https://github.com/Tiengh/Back-End-Development-Songs.git
+
+# mongo
+MONGO_USERNAME: root
+  
+MONGO_HOST: 172.21.3.143
+  
+MONGO_PORT: 27017
+  
+URL: https://labs-mongo-loose-gigantic-garden.mongo.databases.labs.skills.network
+  
+  
+MONGO_URL: https://labs-mongo-loose-gigantic-garden.mongo.databases.labs.skills.network
+  
+  
+MongoDB CLI Command: mongosh mongodb://root:jECQ0jrhBItaAdzXr8ARD832@172.21.3.143:27017
+  
+ 
+MONGO_COMMAND: mongosh mongodb://root:jECQ0jrhBItaAdzXr8ARD832@172.21.3.143:27017
+  
+MONGO_PASSWORD: jECQ0jrhBItaAdzXr8ARD832
+  
+MONGO_TITLE: MongoDB Database
+  
+MONGO_ID: labs-mongo-loose-gigantic-garden
+
+MONGODB_SERVICE=27017 MONGODB_USERNAME=root MONGODB_PASSWORD=jECQ0jrhBItaAdzXr8ARD832 flask --app app run --debugger --reload
+MONGODB_SERVICE=172.21.3.143 MONGODB_USERNAME=root MONGODB_PASSWORD=jECQ0jrhBItaAdzXr8ARD832 flask run --reload --debugger
+  
+
+git remote set-url origin https://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@github.com/Tiengh/Back-end-Development-Capstone.git 
+
+
+git clone https://github.com/Tiengh/Back-end-Development-Capstone.git
+
+docker tag djangoserver us.icr.io/sn-labs-u21021046/djangoserver:1
+
+kubectl port-forward po/djangoserver-6dcfbdc97c-g2zfj 8000:8000
