@@ -8,7 +8,11 @@ const {
   furniture,
 } = require("../../models/product.model");
 const { Types } = require("mongoose");
-const { getSelectData, unGetSelectData } = require("../../utils/index");
+const {
+  getSelectData,
+  unGetSelectData,
+  convertToObjectId,
+} = require("../../utils/index");
 
 const searchProductByUser = async ({ keySearch }) => {
   const regexSearch = new RegExp(keySearch);
@@ -51,11 +55,15 @@ const findProduct = async ({ product_id, unSelect }) => {
   return await product.findById(product_id).select(unGetSelectData(unSelect));
 };
 
-const updateProductById = async ({ productId, payload, model, isNew = true }) => {
-  console.log('repo:',model);
+const updateProductById = async ({
+  productId,
+  payload,
+  model,
+  isNew = true,
+}) => {
+  console.log("repo:", model);
   return await model.findByIdAndUpdate(productId, payload, { new: isNew });
 };
-
 
 const publishProductByShop = async ({ product_shop, product_id }) => {
   const foundProduct = await product.findOne({
@@ -94,6 +102,29 @@ const queyProduct = async ({ query, limit, skip }) => {
     .exec();
 };
 
+const getProductById = async ({ productId }) => {
+  return await product.findById({
+    _id: convertToObjectId(productId),
+  });
+};
+
+// Hàm kiểm tra sản phẩm
+const checkProductByServer = async (products) => {
+  return await Promise.all(
+    products.map(async (product) => {
+      const foundProduct = await getProductById(product.productId);
+      if (foundProduct) {
+        return {
+          price: foundProduct.product_price,
+          quantity: foundProduct.product_quantity,
+          productId: foundProduct._id,
+        };
+      }
+      return null; // Nếu không tìm thấy sản phẩm, trả về null
+    })
+  ).then((results) => results.filter((product) => product !== null)); // Loại bỏ các giá trị null
+};
+
 module.exports = {
   findAllDraftForShop,
   findAllPublishForShop,
@@ -103,4 +134,6 @@ module.exports = {
   publishProductByShop,
   unPublishProductByShop,
   searchProductByUser,
+  getProductById,
+  checkProductByServer,
 };
