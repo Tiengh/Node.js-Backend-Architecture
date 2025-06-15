@@ -26,18 +26,29 @@ class CheckoutService {
         item_products = [],
       } = shop_order_ids[i];
 
-      // Kiểm tra tính hợp lệ của sản phẩm
-      const checkProduct = await checkProductByServer(item_products);
-      if (!checkProduct || checkProduct.length === 0) {
+      // ✅ Kiểm tra sản phẩm hợp lệ và gắn quantity từ item_products
+      const validProducts = await checkProductByServer(item_products);
+      if (!validProducts || validProducts.length === 0) {
         throw new BadRequestError("Order contains invalid products");
       }
 
-      // Tính tổng tiền trước khi áp dụng giảm giá
-      const checkPrice = checkProduct.reduce((acc, product) => {
+      // ✅ Gắn lại quantity từ item_products vào validProducts
+      const enrichedProducts = validProducts.map((product) => {
+        const requestedItem = item_products.find(
+          (p) => p.productId.toString() === product.productId.toString()
+        );
+        return {
+          ...product,
+          quantity: requestedItem ? requestedItem.quantity : 1,
+        };
+      });
+
+      // ✅ Tính tổng tiền trước giảm giá
+      const checkPrice = enrichedProducts.reduce((acc, product) => {
         return acc + product.quantity * product.price;
       }, 0);
 
-      // Cập nhật tổng tiền trước giảm giá
+      // ✅ Cập nhật vào đơn hàng
       checkout_order.totalPrice += checkPrice;
 
       const itemCheckout = {
@@ -45,20 +56,18 @@ class CheckoutService {
         shop_discounts: shop_discount,
         priceRaw: checkPrice,
         priceApplyDiscount: checkPrice,
-        item_products: checkProduct,
+        item_products: enrichedProducts,
       };
 
-      // Nếu có mã giảm giá
+      // ✅ Áp dụng mã giảm giá nếu có
       if (shop_discount.length > 0) {
-        // Giả sử chỉ áp dụng 1 mã giảm giá đầu tiên
         const { totalPrice = 0, discount = 0 } = await getDiscountAmount({
           codeId: shop_discount[0].codeId,
           userId: userId,
           shopId: shopId,
-          products: checkProduct,
+          products: enrichedProducts,
         });
 
-        // Tổng số tiền giảm được cộng dồn
         checkout_order.totalDiscount += discount;
 
         if (discount > 0) {
@@ -66,10 +75,10 @@ class CheckoutService {
         }
       }
 
-      // Cập nhật tổng tiền sau khi áp dụng giảm giá
+      // ✅ Cập nhật tổng tiền cuối cùng
       checkout_order.totalCheckout += itemCheckout.priceApplyDiscount;
 
-      // Lưu vào danh sách đơn hàng mới
+      // ✅ Lưu kết quả từng shop
       shop_order_ids_new.push(itemCheckout);
     }
 
@@ -82,5 +91,3 @@ class CheckoutService {
 }
 
 module.exports = CheckoutService;
-
-

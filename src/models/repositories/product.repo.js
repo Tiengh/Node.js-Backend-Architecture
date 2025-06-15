@@ -108,22 +108,46 @@ const getProductById = async ({ productId }) => {
   });
 };
 
+
 // Hàm kiểm tra sản phẩm
 const checkProductByServer = async (products) => {
   return await Promise.all(
     products.map(async (product) => {
-      const foundProduct = await getProductById(product.productId);
-      if (foundProduct) {
+      try {
+        const foundProduct = await findProduct({ product_id: product.productId });
+
+        if (!foundProduct) {
+          console.warn(`❌ Product not found: ${product.productId}`);
+          return null;
+        }
+
+        // ✅ In ra thông tin sản phẩm nếu tìm thấy
+        console.log(`✅ Found product: ${foundProduct._id} - ${foundProduct.product_name}`);
+
+        // ✅ Kiểm tra tồn kho
+        if (foundProduct.product_quantity < product.quantity) {
+          console.warn(`⚠️ Not enough stock for product: ${product.productId} | Required: ${product.quantity}, Available: ${foundProduct.product_quantity}`);
+          return null;
+        }
+
+        // ✅ Trả về dữ liệu cần thiết
         return {
           price: foundProduct.product_price,
           quantity: foundProduct.product_quantity,
           productId: foundProduct._id,
+          name: foundProduct.product_name,
         };
+      } catch (err) {
+        console.error(`❌ Error while validating product ${product.productId}:`, err);
+        return null;
       }
-      return null; // Nếu không tìm thấy sản phẩm, trả về null
     })
-  ).then((results) => results.filter((product) => product !== null)); // Loại bỏ các giá trị null
+  ).then((results) => results.filter((product) => product !== null));
+
+
 };
+
+
 
 module.exports = {
   findAllDraftForShop,

@@ -1,5 +1,7 @@
 "use strict";
 
+const mongoose = require("mongoose"); // ✅ Fix lỗi ReferenceError
+
 /*
   Product Services
    1 - createProduct [Shop]
@@ -10,9 +12,7 @@
    6 - findAllPublishForShop [Shop]
    7 - searchProducts [User]
    8 - findProduct [Shop | Admin]
-    
 */
-
 
 const {
   product,
@@ -20,7 +20,7 @@ const {
   electronic,
   furniture,
 } = require("../models/product.model");
-const { BadRequestError } = require("../core/error.response");
+const { BadRequestError, NotFoundError } = require("../core/error.response");
 
 const {
   findAllDraftForShop,
@@ -32,11 +32,14 @@ const {
   findProduct,
   updateProductById,
 } = require("../models/repositories/product.repo");
+
 const {
   removeUndefineObject,
   removeUndefinedObject,
   updateNestedObjectParser,
+  unGetSelectData, // ✅ Đảm bảo hàm này tồn tại trong utils nếu dùng
 } = require("../utils");
+
 const { insertInventory } = require("../models/repositories/inventory.repo");
 
 // Define Factory class to create products
@@ -61,52 +64,60 @@ class ProductFactory {
       throw new Error(`Product type ${type} is not registered.`);
     }
     const productInstance = new ProductClass(payload);
-    const result = await productInstance.updateProduct(productId);
-    return result;
+    return await productInstance.updateProduct(productId);
   }
 
-  // PUT //
+  // PUT
   static async publishProductByShop({ product_shop, product_id }) {
     return await publishProductByShop({ product_shop, product_id });
   }
+
   static async unPublishProductByShop({ product_shop, product_id }) {
     return await unPublishProductByShop({ product_shop, product_id });
   }
-  // END PUT //
 
-  // Query //
+  // QUERY
   static async findAllDraftForShop({ product_shop, limit = 50, skip = 0 }) {
     const query = { product_shop, isDraft: true };
     return await findAllDraftForShop({ query, limit, skip });
   }
+
   static async findAllPublishForShop({ product_shop, limit = 50, skip = 0 }) {
     const query = { product_shop, isDraft: false, isPublished: true };
     return await findAllPublishForShop({ query, limit, skip });
   }
+
   static async searchProducts({ keySearch }) {
     return await searchProductByUser({ keySearch });
   }
-  static async findAllProducts({
-    limit = 50,
-    sort = "ctime",
-    page = 1,
-    filter = { isPublished: true },
-  }) {
-    return await findAllProducts({
-      limit,
-      sort,
-      page,
-      filter,
-      select: ["product_name", "product_price", "product_thumb"],
-    });
-  }
-  static async findProduct({ product_id }) {
-    return await findProduct({ product_id, unSelect: ["__v"] });
-  }
-  // END QUERY //
+
+  static findAllProducts = async ({ limit, sort, page, filter, select }) => {
+    const skip = (Number(page) - 1) * Number(limit);
+    const sortBy = sort === "ctime" ? { _id: -1 } : { _id: 1 };
+    return await product
+      .find(filter)
+      .sort(sortBy)
+      .skip(skip)
+      .limit(Number(limit))
+      .select(select)
+      .lean();
+  };
+
+  static findProduct = async ({ product_id, unSelect }) => {
+    if (!product_id || !mongoose.Types.ObjectId.isValid(product_id)) {
+      throw new BadRequestError("Invalid product ID");
+    }
+
+    const found = await product
+      .findById(product_id)
+      .select(unGetSelectData(unSelect));
+    if (!found) throw new NotFoundError("Product not found");
+
+    return found;
+  };
 }
 
-// Define base Product
+// Base Product class
 class Product {
   constructor({
     product_name,
@@ -128,7 +139,6 @@ class Product {
     this.product_attributes = product_attributes;
   }
 
-  // Create new product
   async createProduct(product_id) {
     const newProduct = await product.create({ ...this, _id: product_id });
     if (newProduct) {
@@ -140,16 +150,13 @@ class Product {
     }
     return newProduct;
   }
-  
 
-  // Update product
   async updateProduct(productId, payload) {
     return await updateProductById({ productId, payload, model: product });
   }
 }
 
-// Define sub-classes for different product types
-
+// Clothing subclass
 class Clothing extends Product {
   async createProduct() {
     const newClothing = await clothing.create({
@@ -165,30 +172,26 @@ class Clothing extends Product {
   }
 
   async updateProduct(productId) {
-    // Remove attributes that are null or undefined
     const objectParams = removeUndefinedObject(this);
 
-    // Check if product_attributes exists
     if (objectParams.product_attributes) {
       const bodyUpdate = { ...this.product_attributes };
 
-      // Update child
-      const updateChildResult = await updateProductById({
+      await updateProductById({
         productId,
         payload: updateNestedObjectParser(bodyUpdate),
         model: clothing,
       });
     }
-    // Update product
-    const updateProduct = await super.updateProduct(
+
+    return await super.updateProduct(
       productId,
       updateNestedObjectParser(objectParams)
     );
-
-    return updateProduct;
   }
 }
 
+// Electronic subclass
 class Electronic extends Product {
   async createProduct() {
     const newElectronic = await electronic.create({
@@ -205,30 +208,26 @@ class Electronic extends Product {
   }
 
   async updateProduct(productId) {
-    // Remove attributes that are null or undefined
     const objectParams = removeUndefinedObject(this);
 
-    // Check if product_attributes exists
     if (objectParams.product_attributes) {
       const bodyUpdate = { ...this.product_attributes };
 
-      // Update child
-      const updateChildResult = await updateProductById({
+      await updateProductById({
         productId,
         payload: updateNestedObjectParser(bodyUpdate),
         model: electronic,
       });
     }
-    // Update product
-    const updateProduct = await super.updateProduct(
+
+    return await super.updateProduct(
       productId,
       updateNestedObjectParser(objectParams)
     );
-
-    return updateProduct;
   }
 }
 
+// Furniture subclass
 class Furniture extends Product {
   async createProduct() {
     const newFurniture = await furniture.create({
@@ -244,30 +243,26 @@ class Furniture extends Product {
   }
 
   async updateProduct(productId) {
-    // Remove attributes that are null or undefined
     const objectParams = removeUndefinedObject(this);
 
-    // Check if product_attributes exists
     if (objectParams.product_attributes) {
       const bodyUpdate = { ...this.product_attributes };
 
-      // Update child
-      const updateChildResult = await updateProductById({
+      await updateProductById({
         productId,
         payload: updateNestedObjectParser(bodyUpdate),
         model: furniture,
       });
     }
-    // Update product
-    const updateProduct = await super.updateProduct(
+
+    return await super.updateProduct(
       productId,
       updateNestedObjectParser(objectParams)
     );
-
-    return updateProduct;
   }
 }
 
+// Register product types
 ProductFactory.registerProductType("Electronic", Electronic);
 ProductFactory.registerProductType("Clothing", Clothing);
 ProductFactory.registerProductType("Furniture", Furniture);

@@ -12,6 +12,15 @@ app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// test pub/sub
+InventoryServiceTest = require("./test/inventory.test.js");
+ProductServiceTest = require("./test/product.test.js");
+
+(async () => {
+  await InventoryServiceTest.init(); // ✅ đảm bảo đã subscribe
+  await ProductServiceTest.purchaseProduct("product:001", 10); // sau đó mới publish
+})();
+
 //init db
 require("./dbs/init.mongodb.js");
 // const {checkOverload} = require('./helpers/check.connect');
@@ -31,7 +40,7 @@ app.use((error, req, res, next) => {
   return res.status(statusCode).json({
     status: "error",
     code: statusCode,
-    stack:error.stack,
+    stack: error.stack,
     message: error.message || "Internal Server Error",
   });
 });
