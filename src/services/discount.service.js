@@ -50,7 +50,7 @@ class DiscountService {
     if (new Date(start_date) >= new Date(end_date)) {
       throw new BadRequestError("Invalid start_date or end_date");
     }
-    if (now < new Date(start_date) || now > new Date(end_date)) {
+    if (now > new Date(end_date)) {
       throw new BadRequestError("Discount is not valid for the current date");
     }
 
@@ -143,7 +143,7 @@ class DiscountService {
         limit: +limit,
         page: +page,
         sort: "ctime",
-        select: ["product_name","product_price"],
+        select: ["product_name", "product_price"],
       });
     }
     return products;
@@ -190,10 +190,7 @@ class DiscountService {
 
     if (!discount_is_active) throw new BadRequestError("Discount expire");
     if (!discount_max_uses === 0) throw new BadRequestError("Discount are out");
-    if (
-      new Date() < new Date(discount_start) ||
-      new Date() > new Date(discount_end)
-    )
+    if (new Date() > new Date(discount_end))
       throw new BadRequestError("Discount expire");
     let totalOrder = 0;
     if (discount_min_order_value > 0) {

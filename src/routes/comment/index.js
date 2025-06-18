@@ -12,6 +12,10 @@ const router = express.Router();
 router.use(authenticationV2);
 
 router.post("/", asyncHandler(CommentController.createComment));
+router.post("/list", asyncHandler(CommentController.getCommentsByParentId));
+router.delete("/", asyncHandler(CommentController.deleteCommentById));
+
+
 
 
 module.exports = router;

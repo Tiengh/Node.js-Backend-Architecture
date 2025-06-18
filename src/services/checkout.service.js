@@ -4,6 +4,8 @@ const { findCartById } = require("../models/repositories/cart.repo");
 const { NotFoundError, BadRequestError } = require("../core/error.response");
 const { checkProductByServer } = require("../models/repositories/product.repo");
 const { getDiscountAmount } = require("../services/discount.service");
+const { acquireLock, releaseLock } = require("./redis.service");
+const { order } = require("../models/order.model");
 
 class CheckoutService {
   static async checkoutReview({ cartId, userId, shop_order_ids }) {
@@ -62,9 +64,9 @@ class CheckoutService {
       // ✅ Áp dụng mã giảm giá nếu có
       if (shop_discount.length > 0) {
         const { totalPrice = 0, discount = 0 } = await getDiscountAmount({
-          codeId: shop_discount[0].codeId,
-          userId: userId,
+          code: shop_discount[0].code,
           shopId: shopId,
+          userId: userId,
           products: enrichedProducts,
         });
 
@@ -88,6 +90,70 @@ class CheckoutService {
       checkout_order,
     };
   }
+
+  static async orderByUser({
+    shop_order_ids,
+    checkout_order,
+    cartId,
+    userId,
+    user_address = {},
+    user_payment = {},
+  }) {
+    const { shop_order_ids_new, checkout_order_new } =
+      await CheckoutService.checkoutReview({
+        cartId,
+        userId,
+        shop_order_ids,
+      });
+
+    //check tồn kho
+    const products = shop_order_ids_new.flatMap((order) => order.item_products);
+    console.log(`[1]: `, products);
+    const acquireProduct = [];
+
+    for (let i = 0; i < products.length; i++) {
+      const { productId, quantity } = products[i];
+      const keyLock = await acquireLock(productId, quantity, cartId);
+      acquireProduct.push(keyLock ? true : false);
+      if (keyLock) {
+        await releaseLock(keyLock);
+      }
+    }
+
+    if (acquireProduct.includes(false)) {
+      throw new BadRequestError(
+        "Một số sản phẩm đã được cập nhật vui lòng quay lại giở hàng!"
+      );
+    }
+
+    const newOrder = await order.create({
+      order_userId: userId,
+      order_checkout: checkout_order_new,
+      order_shopping: user_address,
+      order_payment: user_payment,
+      order_product: shop_order_ids_new,
+    });
+
+    //Nếu insert thành công thì xóa product trong cart
+    if (newOrder) {
+      //Xóa product trong cart
+
+    }
+    return newOrder;
+  }
+
+  static async getOrderByUser() {
+  }
+
+  static async getOneOrderByUser() {
+  }
+
+  static async cancelOrderByUser() {
+  }
+
+  static async updateOrderStatusByShop() {
+  }
+
 }
 
 module.exports = CheckoutService;
